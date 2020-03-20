@@ -1,0 +1,13 @@
+@media (min-width: 768px){
+    .grid-cards{
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        column-gap: 20px;
+        row-gap: 20px; 
+    }
+}
+@media (min-width: 1024px){
+    .grid-cards{
+        grid-template-columns: 1fr 1fr 1fr 1fr;
+    }
+}

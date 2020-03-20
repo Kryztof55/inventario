@@ -1,12 +1,13 @@
-import React, {useState} from 'react';
+import React, {useState, useEffect} from 'react';
 
 import Jumbotron from './components/atomos/jumbotron/jumbotron'
 import Button from './components/atomos/boton/boton'
 import Input from './components/atomos/input/input'
 import Modal from './components/organismos/modal/modal'
+import Alert from './components/moleculas/alert/alert'
+import Card from './components/organismos/cards/card'
 const App = () => {
   const [show, setShow] = useState(false);
-  
   const [recordName, setRecordName]= useState();
   const [band, setBand]= useState();
   const [genre, setGenre]= useState();
@@ -14,6 +15,20 @@ const App = () => {
   const [released, setReleased]= useState();
   const [edicion, setEdicion]= useState();
   const [price, setPrice]= useState();
+  const [resAdd, setResAdd] = useState(false);
+  const [resMessage, setResMessage]= useState("Mensaje");
+  const [resTheme, setResTheme] = useState("alert alert-success");
+  const [records, setRecords] = useState([]);
+  const [filtrando, setFiltrando] = useState(false)
+  const [recordFiltrado, setRecordFiltrado] = useState([])
+  useEffect(() => {
+    peticionRecord()
+    console.log(records)
+  },[]);
+
+  // content cards
+
+  
 
   const onChangeName = (e) => {
     setRecordName(e.target.value)
@@ -43,8 +58,6 @@ const App = () => {
     setPrice(e.target.value)
     console.log(price)
   }
-
-
   const openModal = () => {
     setShow(true);
   }
@@ -79,21 +92,85 @@ const App = () => {
       )
       .then(res =>{
         console.log(res.json())
+        setResAdd(true)
+        setResMessage("Record added succesfully")
+        peticionRecord()
       } )
-      .catch(error => console.log('Error:', error))
+      .catch(error =>{
+        console.log('Error:', error.json())
+        setResAdd(true)
+        setResMessage("Error")
+        setResTheme("alert alert-danger")
+
+      } 
+      )
     }
-      
+  }
+  const peticionRecord = () => {
+    fetch("http://localhost:5000/records", {
+          method: "GET",
+          headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+            },
+          }
+    ).then(res =>{
+        return (res.json())
+        } 
+      )
+      .then(res =>{
+          setRecords(res)
+          setFiltrando(false);
+          console.log(res)
+          //console.log(records)
+        }
+      )
+      .catch(error =>{
+        console.log('Error:', error)
+        console.log("Falla")
+      } 
+    )
+  }
+  const deleteRecord = (item) =>{
+    fetch(`http://localhost:5000/records/${item}`, {
+          method: "DELETE",
+          headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+            },
+          }
+    ).then(res =>{
+        peticionRecord()
+        } 
+      )
+      .catch(error =>{
+        console.log('Error:', error)
+        console.log("Falla")
+      } 
+    )
+  }
+  const filtrarRecord = (e) => {
+    //console.log(e.target.value)
+    var textFilter = e.target.value.toLowerCase()
+    setFiltrando(true);
+    var recordFilter = records.filter(records => 
+                       records.recordname.toLowerCase().includes(textFilter) || 
+                       records.band.toLowerCase().includes(textFilter) ||
+                       records.description.toLowerCase().includes(textFilter) ||
+                       records.genre.toLowerCase().includes(textFilter) 
+
     
-    
+    )
+    setRecordFiltrado(recordFilter)
   }
   return (
     <div className="App">
       <Jumbotron className="jumbotron jumbotron-fluid">
         <h1 className="display-4">kryztof's Records</h1>
         <p className="lead">Inventario de Discos de vinyl</p>
-        
+        <Input inputType="search" className="form-control" placeholder="Buscar..." required={false} onChange={filtrarRecord}/>
       </Jumbotron>
-      <section className="container">
+      <section className="container mb-5">
           <div className="d-flex">
             <Button typeButton="button" className="btn btn-primary d-flex align-items-center" text="Add" action={openModal}>
               <i className="material-icons">add</i>
@@ -101,17 +178,42 @@ const App = () => {
 
           </div>
       </section>
+      <section className="container mb-5">
+        <div className="grid-cards">
+          {
+          !filtrando?
+          records.map(item => (
+              <Card key={item._id} record={item.recordname} band={item.band} genre={item.genre} released={item.released} edicion={item.edition} price={item.price} action={() => deleteRecord (item._id)}/>
+            ))
+            :
+          recordFiltrado.map(item => (
+            <Card key={item._id} record={item.recordname} band={item.band} genre={item.genre} released={item.released} edicion={item.edition} price={item.price} action={() => deleteRecord (item._id)}/>
+           ))
+
+          }
+        </div>
+      </section>
+
       <Modal closeModal={closeModal} show={show} header="Agregar disco">
-        <form className="container" id="addForm">
-          <Input value={recordName} inputType="text" className="form-control mb-2" placeholder="Nombre del disco" required={true} onChange={onChangeName}/>
-          <Input value={band} inputType="text" className="form-control mb-2" placeholder="Banda" required={true} onChange={onChangeBanda}/>
-          <Input value={genre} inputType="text" className="form-control mb-2" placeholder="Género" required={true} onChange={onChangeGenre}/>
-          <Input value={description} inputType="text" className="form-control mb-2" placeholder="Descripción" required={true} onChange={onChangeDescripcion}/>
-          <Input value={released} inputType="date" className="form-control mb-2" placeholder="Lanzamiento" required={true} onChange={onChangeReleased}/>
-          <Input value={edicion} inputType="text" className="form-control mb-2" placeholder="Edición" required={true} onChange={onChangeEdicion}/>
-          <Input value={price} inputType="number" className="form-control mb-2" placeholder="Precio" required={true} onChange={onChangePrecio}/>
-          <Button  typeButton="submit" className="btn btn-primary d-flex align-items-center" text="Guardar" action={enviar} disabled={false}></Button>
+        <form className="container mb-3" id="addForm">
+          <Input inputType="text" className="form-control mb-2" placeholder="Nombre del disco" required={true} onChange={onChangeName}/>
+          <Input inputType="text" className="form-control mb-2" placeholder="Banda" required={true} onChange={onChangeBanda}/>
+          <Input inputType="text" className="form-control mb-2" placeholder="Género" required={true} onChange={onChangeGenre}/>
+          <Input inputType="text" className="form-control mb-2" placeholder="Descripción" required={true} onChange={onChangeDescripcion}/>
+          <Input inputType="date" className="form-control mb-2" placeholder="Lanzamiento" required={true} onChange={onChangeReleased}/>
+          <Input inputType="text" className="form-control mb-2" placeholder="Edición" required={true} onChange={onChangeEdicion}/>
+          <Input inputType="number" className="form-control mb-2" placeholder="Precio" required={true} onChange={onChangePrecio}/>
+          <Button typeButton="submit" className="btn btn-primary d-flex align-items-center" text="Guardar" action={enviar} disabled={false}></Button>
         </form>
+        {
+
+          resAdd?
+            <div className="container">
+              <Alert theme={resTheme} text={resMessage}></Alert>
+            </div>
+          :
+          <div></div>
+        }
       </Modal>
     </div>
   );
