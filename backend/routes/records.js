@@ -1,4 +1,6 @@
+const path = require("path");
 const router = require('express').Router();
+
 let Record = require('../models/record.model');
 
 router.route('/').get((req, res) => {
@@ -7,7 +9,7 @@ router.route('/').get((req, res) => {
     .catch(err => res.status(400).json('Error: ' + err));
 });
 
-router.route('/add').post((req, res) => {
+router.route('/add').post((req, res, next) => {
   const recordname = req.body.recordname;
   const band = req.body.band;
   const genre = req.body.genre;
@@ -15,7 +17,8 @@ router.route('/add').post((req, res) => {
   const released = Date.parse(req.body.released);
   const edition = req.body.edition;
   const price = Number(req.body.price);
-  
+  const image = req.body.image
+  //const imgUrl = upload.storage
 
   const newRecord = new Record({
     recordname,
@@ -24,9 +27,13 @@ router.route('/add').post((req, res) => {
     description,
     released,
     edition,
-    price
+    price,
+    image
+
 
   });
+
+
 
   newRecord.save()
   .then(() => res.json('Record added!'))

@@ -1,5 +1,7 @@
 import React, {useState, useEffect} from 'react';
 
+
+
 import Jumbotron from './components/atomos/jumbotron/jumbotron'
 import Button from './components/atomos/boton/boton'
 import Input from './components/atomos/input/input'
@@ -15,6 +17,7 @@ const App = () => {
   const [released, setReleased]= useState();
   const [edicion, setEdicion]= useState();
   const [price, setPrice]= useState();
+  const [image, setImage] = useState("Defaul");
   const [resAdd, setResAdd] = useState(false);
   const [resMessage, setResMessage]= useState("Mensaje");
   const [resTheme, setResTheme] = useState("alert alert-success");
@@ -58,9 +61,20 @@ const App = () => {
     setPrice(e.target.value)
     console.log(price)
   }
+
+  const onChangeUpload = e =>{
+    console.log(e.target.files[0])
+    let file = e.target.files[0]
+    let reader = new FileReader();
+    reader.onload = function(){
+      setImage(reader.result)
+    };
+    reader.readAsDataURL(file);
+  } 
   const openModal = () => {
     setShow(true);
   }
+
   const closeModal = () => setShow(false);
   const enviar = (e) => {
     e.preventDefault()
@@ -78,7 +92,8 @@ const App = () => {
         "description": description,
         "released": released,
         "edition": edicion,
-        "price": price
+        "price": price,
+        "image":image,
       }
       console.log(record)
       fetch("http://localhost:5000/records/add", {
@@ -87,7 +102,7 @@ const App = () => {
           'Accept': 'application/json',
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify(record)
+        body:JSON.stringify(record)
         }
       )
       .then(res =>{
@@ -95,6 +110,13 @@ const App = () => {
         setResAdd(true)
         setResMessage("Record added succesfully")
         peticionRecord()
+        setTimeout(() => {
+          closeModal()
+          form.reset()
+          setResAdd(false)
+        }, 1000)
+        
+        
       } )
       .catch(error =>{
         console.log('Error:', error.json())
@@ -149,6 +171,9 @@ const App = () => {
       } 
     )
   }
+  const edit = () =>{
+    console.log("edit")
+  }
   const filtrarRecord = (e) => {
     //console.log(e.target.value)
     var textFilter = e.target.value.toLowerCase()
@@ -163,6 +188,7 @@ const App = () => {
     )
     setRecordFiltrado(recordFilter)
   }
+  let cardRecords = !filtrando? records : recordFiltrado
   return (
     <div className="App">
       <Jumbotron className="jumbotron jumbotron-fluid">
@@ -181,21 +207,15 @@ const App = () => {
       <section className="container mb-5">
         <div className="grid-cards">
           {
-          !filtrando?
-          records.map(item => (
-              <Card key={item._id} record={item.recordname} band={item.band} genre={item.genre} released={item.released} edicion={item.edition} price={item.price} action={() => deleteRecord (item._id)}/>
+          cardRecords.map(item => (
+              <Card key={item._id} image={item.image} record={item.recordname} band={item.band} genre={item.genre} released={item.released} edicion={item.edition} price={item.price} actionEdit={edit} action={() => deleteRecord (item._id)}/>
             ))
-            :
-          recordFiltrado.map(item => (
-            <Card key={item._id} record={item.recordname} band={item.band} genre={item.genre} released={item.released} edicion={item.edition} price={item.price} action={() => deleteRecord (item._id)}/>
-           ))
-
           }
         </div>
       </section>
 
       <Modal closeModal={closeModal} show={show} header="Agregar disco">
-        <form className="container mb-3" id="addForm">
+        <form className="mb-3" id="addForm" encType="multipart/form-data">
           <Input inputType="text" className="form-control mb-2" placeholder="Nombre del disco" required={true} onChange={onChangeName}/>
           <Input inputType="text" className="form-control mb-2" placeholder="Banda" required={true} onChange={onChangeBanda}/>
           <Input inputType="text" className="form-control mb-2" placeholder="Género" required={true} onChange={onChangeGenre}/>
@@ -203,6 +223,7 @@ const App = () => {
           <Input inputType="date" className="form-control mb-2" placeholder="Lanzamiento" required={true} onChange={onChangeReleased}/>
           <Input inputType="text" className="form-control mb-2" placeholder="Edición" required={true} onChange={onChangeEdicion}/>
           <Input inputType="number" className="form-control mb-2" placeholder="Precio" required={true} onChange={onChangePrecio}/>
+          <Input inputType="file" className="form-control mb-2" placeholder="Upload image" required={true} onChange={onChangeUpload}></Input>
           <Button typeButton="submit" className="btn btn-primary d-flex align-items-center" text="Guardar" action={enviar} disabled={false}></Button>
         </form>
         {

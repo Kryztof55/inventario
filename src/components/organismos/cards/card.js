@@ -1,24 +1,27 @@
 import React from 'react'
 import Button from '../../atomos/boton/boton'
+import Moment from 'react-moment'
 import style from './style.scss'
 
 const Card = props => {
-    const {urlImg, record, band, genre, released, edicion, price, action } = props
+    const {image, record, band, genre, released, edicion, price, action, actionEdit } = props
     return (
             <div className="card" >
-                <img className="card-img-top" src={urlImg} alt={record}/>
+                <img className="card-img-top" src={image} alt={record}/>
                 <div className="card-body">
                     <h5 className="card-title">{record}</h5>
                     <p className="card-text">{band}</p>
                     <p className="card-text">{genre}</p>
-                </div>
-                <ul className="list-group list-group-flush">
-                    <li className="list-group-item">Lanzamiento: {released}</li>
-                    <li className="list-group-item">{edicion}</li>
-                    <li className="list-group-item">${price}</li>
-                </ul>
-                <div className="card-body">
-                    <Button typeButton="button" className="btn btn-info mr-2">
+                    <ul className="list-group list-group-flush mb-3">
+                        <li className="list-group-item">Lanzamiento:
+                            <Moment format="YYYY/MM/DD">
+                                {released}
+                            </Moment>
+                         </li>
+                        <li className="list-group-item">{edicion}</li>
+                        <li className="list-group-item">${price}</li>
+                    </ul>
+                    <Button typeButton="button" className="btn btn-info mr-2" action={actionEdit}>
                         <i className="material-icons">create</i>
                     </Button>
                     <Button typeButton="button" className="btn btn-danger" action={action}>
